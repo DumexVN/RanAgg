@@ -27,7 +27,7 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
         txt =  QString("Fatal: %1 ").arg(msg).append('\n');
         abort();
     }
-    QFile outFile("C:/Users/Dumex/Desktop/SocialNetworksCollection/SNAP_DumexTemplate/log.txt");
+    QFile outFile("");
     outFile.open(QIODevice::WriteOnly | QIODevice::Append);
     QTextStream ts(&outFile);
     ts << txt << endl;
@@ -38,14 +38,14 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 int main(int argc, char *argv[])
 {
     Graph G;
-    QString dirPath = "C:/Users/Dumex/Desktop/SocialNetworksCollection/SNAP_DumexTemplate/DBLP";
+    QString dirPath = "";
     QDir dir(dirPath);
     if (!dir.exists())
     {
         qDebug() << "Dir Not Found!";
         return 0;
     }
-    QFile file("C:/Users/Dumex/Desktop/SocialNetworksCollection/SNAP_DumexTemplate/log.txt");
+    QFile file("");
     if (file.exists())
     {
         if(file.remove())

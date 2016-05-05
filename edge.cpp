@@ -1,7 +1,7 @@
 #include "edge.h"
 #include "vertex.h"
 
-Edge::Edge(Vertex *fromVertex, Vertex *toVertex, quint64 index)
+Edge::Edge(Vertex *fromVertex, Vertex *toVertex, quint32 index)
 {
     myFromVertex = fromVertex;
     myToVertex = toVertex;
@@ -42,7 +42,7 @@ void Edge::removeAll()
     myToVertex->removeAdj(myFromVertex->getIndex());
 }
 
-quint64 Edge::getIndex() const
+quint32 Edge::getIndex() const
 {
     return index;
 }

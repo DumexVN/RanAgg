@@ -9,7 +9,7 @@ class Edge
 {
 
 public:
-    Edge(Vertex *fromVertex, Vertex *toVertex, quint64 index);
+    Edge(Vertex *fromVertex, Vertex *toVertex, quint32 index);
     ~Edge();
 
     Vertex *fromVertex() const;
@@ -17,12 +17,12 @@ public:
 
     void removeAll();
 
-    quint64 getIndex() const;
+    quint32 getIndex() const;
 
 protected:
     Vertex *myFromVertex;
     Vertex *myToVertex;
-    quint64 index;
+    quint32 index;
 };
 
 #endif

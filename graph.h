@@ -53,15 +53,15 @@ private:
     void large_process_overlap();
     void large_graph_parse_result();
     void large_parse_retain_result();
-    void LARGE_compute_cluster_matching(int n);
-    double LARGE_compute_Pairwise_efficient(int n);
+    void LARGE_compute_cluster_matching(quint32 n);
+    double LARGE_compute_Pairwise_efficient(quint32 n);
     double LARGE_compute_Newman_fraction_of_classified();
     double LARGE_compute_modularity();
     void LARGE_reset();
     bool LARGE_reload();
     void LARGE_reload_edges();
 
-    int count_unique_element();
+    quint32 count_unique_element();
     quint64 calA(QList<quint64> param);
     quint64 calB(QList<quint64> param);
     quint64 calC(QList<quint64> param);
@@ -73,10 +73,10 @@ private:
     QList<Edge*> myEdgeList;
     QList<Vertex*> centroids;
     //
-    QList<QList<int> > ground_truth_communities;
-    QList<QPair<int,int> > hierarchy;
-    QList<QList<int> > large_result;
-    QSet<int> large_excluded;
+    QList<QList<quint32> > ground_truth_communities;
+    QList<QPair<quint32,quint32> > hierarchy;
+    QList<QList<quint32> > large_result;
+    QSet<quint32> large_excluded;
     //
     bool graphIsReady;
 };

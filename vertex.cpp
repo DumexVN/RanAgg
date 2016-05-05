@@ -27,19 +27,18 @@ Vertex::~Vertex()
         delete edge;
 }
 
-
-
-void Vertex::setIndex(const int &number)
+void Vertex::setIndex(const quint32 &number)
 {
     myIndex = number;
 }
 
-int Vertex::getIndex() const
+quint32 Vertex::getIndex() const
 {
     return myIndex;
 }
 
-void Vertex::addAdj(const int &index)
+
+void Vertex::addAdj(const quint32 &index)
 {
     if (!myNeighbours.contains(index))
         myNeighbours.append(index);
@@ -47,12 +46,12 @@ void Vertex::addAdj(const int &index)
         qDebug() << "NEIGHBOUR ALREADY EXISTS, SKIPPING";
 }
 
-int Vertex::getNumAdj() const
+quint32 Vertex::getNumAdj() const
 {
     return myNeighbours.size();
 }
 
-int Vertex::getOneNeighbourIndex(const int &index)
+quint32 Vertex::getOneNeighbourIndex(const quint32 &index)
 {
     if (myNeighbours.size()+1 > index)
         return myNeighbours.at(index);
@@ -60,12 +59,15 @@ int Vertex::getOneNeighbourIndex(const int &index)
         qDebug() << "Out of Bound While Getting A Neighbour";
 }
 
-void Vertex::removeAdj(const int &index)
+
+void Vertex::removeAdj(const quint32 &index)
 {
     if (myNeighbours.contains(index))
         myNeighbours.removeAll(index);
-    else{}
-      //  qDebug() << "Out Of Bound While Trying to Remove A Neighbour";
+    else
+    {
+        qDebug() << "Out Of Bound While Trying to Remove A Neighbour";
+    }
 }
 
 void Vertex::removeAll()
@@ -93,6 +95,7 @@ quint64 Vertex::getWeight() const
 }
 
 
+
 void Vertex::setParent(Vertex *v)
 {
     if (v == 0)
@@ -113,6 +116,7 @@ void Vertex::setParent(Vertex *v)
     }
 }
 
+
 void Vertex::setParentPointerOnly(Vertex *v)
 {
     if (v == 0)
@@ -130,6 +134,7 @@ void Vertex::setParentPointerOnly(Vertex *v)
     }
 }
 
+
 void Vertex::incrementNoChild()
 {
     noOfChild++;
@@ -145,7 +150,7 @@ quint64 Vertex::getExtraWeight() const
     return ExtraWeight;
 }
 
-int Vertex::getNoChild() const
+quint32 Vertex::getNoChild() const
 {
     return noOfChild;
 }
@@ -160,17 +165,12 @@ QList<Vertex *> Vertex::getAbsorbedList()
     return absorbed;
 }
 
-QList<int> Vertex::getNeighbourIndexes()
+QList<quint32> Vertex::getNeighbourIndexes()
 {
-    QList<int> indexes;
+    QList<quint32> indexes;
     for (int i = 0; i < myEdge.size(); i++)
     {
-        Vertex * neighbour;
-        Edge * e = myEdge.at(i);
-        if (e->fromVertex() == this)
-            neighbour = e->toVertex();
-        else
-            neighbour = e->fromVertex();
+        Vertex * neighbour = this->get_neighbour_fromEdge(myEdge[i]);
         indexes.append(neighbour->getIndex());
     }
     return indexes;
@@ -193,7 +193,7 @@ void Vertex::removeEdge(Edge *edge)
     myNeighbours.removeOne(neighbour->getIndex());
 }
 
-int Vertex::getNumberEdge() const
+quint32 Vertex::getNumberEdge() const
 {
     return myEdge.size();
 }
@@ -219,13 +219,13 @@ Edge *Vertex::getEdgeFromVertex(Vertex * v2)
 
 Edge *Vertex::getSmallestCurrentDegreeNeighbour()
 {
-    QList<int> indexes;
-    int smallest = 9999;
+    QList<quint32> indexes;
+    quint32 smallest = 999999;
     for (int i = 0; i < myEdge.size(); i++)
     {
         Edge * e = myEdge.at(i);
         Vertex * neighbour = this->get_neighbour_fromEdge(e);
-        int w = neighbour->getNumberEdge();
+        quint32 w = neighbour->getNumberEdge();
         if (w < smallest)
         {
             indexes.clear();
@@ -250,13 +250,13 @@ Edge *Vertex::getSmallestCurrentDegreeNeighbour()
 
 Edge *Vertex::getSmallestCurrentWeightNeighbour()
 {
-    QList<int> indexes;
-    int smallest = 9999;
+    QList<quint32> indexes;
+    quint64 smallest = 99999999;
     for (int i = 0; i < myEdge.size(); i++)
     {
         Edge * e = myEdge.at(i);
         Vertex * neighbour = this->get_neighbour_fromEdge(e);
-        int w = neighbour->getWeight();
+        quint64 w = neighbour->getWeight();
         if (w < smallest)
         {
             indexes.clear();
@@ -280,7 +280,7 @@ Edge *Vertex::getSmallestCurrentWeightNeighbour()
 }
 
 
-void Vertex::absorb_removeEdge(int edge_index)
+void Vertex::absorb_removeEdge(quint32 edge_index)
 {
     Vertex * neighbour = 0;
     Edge * edge = myEdge.at(edge_index);
@@ -374,7 +374,7 @@ void Vertex::absorb_singleton(Vertex *v)
     v->remove_all_edges();
 }
 
-Vertex *Vertex::get_neighbour_fromEdge(int edge_index)
+Vertex *Vertex::get_neighbour_fromEdge(quint32 edge_index)
 {
     Vertex * neighbour = 0;
     Edge * edge = myEdge.at(edge_index);
@@ -388,10 +388,15 @@ Vertex *Vertex::get_neighbour_fromEdge(int edge_index)
 Vertex *Vertex::get_neighbour_fromEdge(Edge *edge)
 {
     Vertex * neighbour = 0;
-    if (edge->fromVertex() == this)
-        neighbour = edge->toVertex();
+    if (edge->toVertex() == this || edge->fromVertex() == this)
+    {
+        if (edge->fromVertex() == this)
+            neighbour = edge->toVertex();
+        else
+            neighbour = edge->fromVertex();
+    }
     else
-        neighbour = edge->fromVertex();
+        qDebug() << "ERROR: EITHER END OF THE EDGE IS NOT THE QUERIED VERTEX!";
     return neighbour;
 }
 
@@ -399,12 +404,12 @@ Edge *Vertex::getHighestDegreeNeighbour()
 {
     QList<Edge*> edge;
     Edge * final;
-    int highest = 0;
+    quint32 highest = 0;
     for (int i = 0; i < myEdge.size(); i++)
     {
         Edge * e = myEdge.at(i);
         Vertex * v = get_neighbour_fromEdge(e);
-        int d = v->getNumberEdge();
+        quint32 d = v->getNumberEdge();
         if (d > highest)
         {
             highest = d;
@@ -432,7 +437,7 @@ QList<Edge *> Vertex::getAllEdge() const
     return myEdge;
 }
 
-Edge *Vertex::getEdge(int edgeIndex) const
+Edge *Vertex::getEdge(quint32 edgeIndex) const
 {
     return myEdge.at(edgeIndex);
 }
@@ -457,6 +462,10 @@ Edge *Vertex::getWeightedProbabilisticEdge()
     return edge.at(ran);
 }
 
+/** Get Edege with Pr(e) = d(e)/sum d
+ * @brief Vertex::getDegreeProbabilisticEdge
+ * @return
+ */
 Edge *Vertex::getDegreeProbabilisticEdge()
 {
     QList<Edge*> edge;
@@ -464,14 +473,13 @@ Edge *Vertex::getDegreeProbabilisticEdge()
     {
         Edge * e = myEdge.at(i);
         Vertex * v = get_neighbour_fromEdge(e);
-        int w = v->getNumberEdge();
-        for (quint64 j = 0; j < w; j++)
+        quint32 w = v->getNumberEdge();
+        for (quint32 j = 0; j < w; j++)
             edge.append(e);
     }
 
-    std::uniform_int_distribution<quint64> distribution(0,edge.size()-1);
-
-    quint64 ran = distribution(gen);
+    std::uniform_int_distribution<quint32> distribution(0,edge.size()-1);
+    quint32 ran = distribution(gen);
     return edge.at(ran);
 }
 
@@ -486,12 +494,7 @@ Vertex *Vertex::aggregate_get_degree_biased_neighbour()
     QList<Vertex*> neighbours;
     for (int i = 0; i < myEdge.size(); i++)
     {
-        Vertex * neighbour = 0;
-        Edge * edge = myEdge.at(i);
-        if (edge->fromVertex() == this)
-            neighbour = edge->toVertex();
-        else
-            neighbour = edge->fromVertex();
+        Vertex * neighbour = this->get_neighbour_fromEdge(myEdge[i]);
         quint64 weight = neighbour->getWeight();
         for (quint64 j = 0; j < weight; j++)
             neighbours.append(neighbour);
@@ -568,8 +571,8 @@ Edge *Vertex::getHighestTriangulateCluster()
 {
     //first get all neighbour cluster
     QList<Vertex*> centroids;
-    QList<int> queried_edge;
-    for (int i = 0; i < myEdge.size(); i++)
+    QList<quint32> queried_edge;
+    for (quint32 i = 0; i < myEdge.size(); i++)
     {
         Edge * e = myEdge.at(i);
         Vertex * neighbour = this->get_neighbour_fromEdge(e);
@@ -596,22 +599,22 @@ Edge *Vertex::getHighestTriangulateCluster()
     }
 
     quint64 highest_score = 0;
-    QList<int> index;
+    QList<quint32> index;
 
-    for (int i = 0 ; i < queried_edge.size(); i++)
+    for (quint32 i = 0 ; i < queried_edge.size(); i++)
     {
-        int edge_index = queried_edge.at(i);
+        quint32 edge_index = queried_edge.at(i);
         Edge * e = myEdge.at(edge_index);
         Vertex * adjacent = this->get_neighbour_fromEdge(e);
 
         Vertex * queried_centroid = centroids[i];
-        quint64 score = 0;
+        quint32 score = 0;
         // count number of real triangles between V and This
-        QList<int> current_iteration_neighbour = adjacent->getNeighbourIndexes();
+        QList<quint32> current_iteration_neighbour = adjacent->getNeighbourIndexes();
         //get current centroid indexes
         QList<Vertex*> current_iteration_cluster = queried_centroid->getMyCluster();
-        QList<int> current_iteration_cluster_indexes;
-        for (int j = 0; j < current_iteration_cluster.size(); j++ )
+        QList<quint32> current_iteration_cluster_indexes;
+        for (quint32 j = 0; j < current_iteration_cluster.size(); j++ )
         {
             Vertex * v = current_iteration_cluster.at(j);
             current_iteration_cluster_indexes.append(v->getIndex());
@@ -619,9 +622,9 @@ Edge *Vertex::getHighestTriangulateCluster()
         }
 
         //counting score
-        for (int j = 0; j < myNeighbours.size(); j++)
+        for (quint32 j = 0; j < myNeighbours.size(); j++)
         {
-            int adj = myNeighbours[j];
+            quint32 adj = myNeighbours[j];
             if (adj == adjacent->getIndex())
                 continue;
             if (current_iteration_neighbour.contains(adj))
@@ -657,7 +660,7 @@ Edge *Vertex::getHighestTriangulateCluster()
     }
 
 
-    int selected_index = -1;
+    quint32 selected_index = 0;
     if (index.size() > 1)
     {
         std::uniform_int_distribution<int> distribution(0,index.size()-1);
@@ -683,19 +686,19 @@ Edge *Vertex::getHighestTriangulateCluster()
 Edge *Vertex::getProbabilisticTriangulationCoeffVertex()
 {
     QList<Edge*> sample;
-    for (int i = 0; i < myEdge.size(); i++)
+    for (quint32 i = 0; i < myEdge.size(); i++)
     {
         Vertex * neighbour = this->get_neighbour_fromEdge(myEdge[i]);
-        quint64 similar = this->getNoOfTriangles(neighbour);
+        quint32 similar = this->getNoOfTriangles(neighbour);
 
         sample.append(myEdge[i]);
-        for (quint64 j =0; j < similar; j++)
+        for (quint32 j =0; j < similar; j++)
             sample.append(myEdge[i]);
     }
     if(!sample.empty())
     {
-        std::uniform_int_distribution<quint64> distribution(0,sample.size()-1);
-        quint64 ran = distribution(gen);
+        std::uniform_int_distribution<quint32> distribution(0,sample.size()-1);
+        quint32 ran = distribution(gen);
         return sample.at(ran);
     }
     else
@@ -722,7 +725,7 @@ Edge *Vertex::getProbabilisticTriangulationAndWeightVertex()
     for (int i = 0; i < myEdge.size(); i++)
     {
         Vertex * neighbour = this->get_neighbour_fromEdge(myEdge[i]);
-        int similar = this->getNoOfTriangles(neighbour);
+        quint32 similar = this->getNoOfTriangles(neighbour);
         quint64 normalise_w = 0;
         if (neighbour->getNoChild() > 0)
             normalise_w = neighbour->getExtraWeight() / neighbour->getNoChild();
@@ -742,11 +745,11 @@ Edge *Vertex::getProbabilisticTriangulationAndWeightVertex()
 
 
 
-int Vertex::getNoOfTriangles(Vertex *v)
+quint32 Vertex::getNoOfTriangles(Vertex *v)
 {
-    QSet<int> thisAdj = this->getNeighbourIndexes().toSet();
-    QSet<int> neighbourAdj = v->getNeighbourIndexes().toSet();
-    int similar = thisAdj.intersect(neighbourAdj).size();
+    QSet<quint32> thisAdj = this->getNeighbourIndexes().toSet();
+    QSet<quint32> neighbourAdj = v->getNeighbourIndexes().toSet();
+    quint32 similar = thisAdj.intersect(neighbourAdj).size();
     return similar;
 }
 
@@ -770,7 +773,7 @@ void Vertex::addMemberToCluster(QList<Vertex *> v)
 {
     if (v.size() == 0)
         return;
-    for (int i = 0; i < v.size(); i++)
+    for (quint32 i = 0; i < v.size(); i++)
     {
         if (!myCluster.contains(v[i]))
             myCluster.append(v[i]);

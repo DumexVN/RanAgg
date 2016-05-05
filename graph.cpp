@@ -55,16 +55,16 @@ void Graph::random_aggregate()
     QList<Vertex*> players = myVertexList;
     QList<Vertex*> winners;
 
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
     qDebug() << "STARTING...";
     while(!players.empty()) //start
     {
         //select a vertex uniformly at random
-        int size = players.size();
-        std::uniform_int_distribution<int> distribution(0,size-1);
-        int selected_index = distribution(generator);
+        quint32 size = players.size();
+        std::uniform_int_distribution<quint32> distribution(0,size-1);
+        quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
         if (selected->is_vertex_absorbed() || selected->getParent() != 0)
         {
@@ -72,7 +72,7 @@ void Graph::random_aggregate()
             return;
         }
         //get a neighbour
-        int no_neighbour = selected->getNumberEdge();
+        quint32 no_neighbour = selected->getNumberEdge();
         if (no_neighbour == 0) // if there is no neighbour, declare a winner
         {
             winners.append(selected);
@@ -81,8 +81,8 @@ void Graph::random_aggregate()
         }
         else // else absorb
         {
-            std::uniform_int_distribution<int> distribution2(0,no_neighbour-1);
-            int selected_edge_index = distribution2(generator);
+            std::uniform_int_distribution<quint32> distribution2(0,no_neighbour-1);
+            quint32 selected_edge_index = distribution2(generator);
             Edge * e = selected->getEdge(selected_edge_index);
             Vertex * neighbour = selected->get_neighbour_fromEdge(e); //get the neighbour (not clean)
             hierarchy.append(qMakePair(neighbour->getIndex(), selected->getIndex()));
@@ -113,19 +113,19 @@ void Graph::random_aggregate_with_degree_comparison()
     //initialise arrays
     QList<Vertex*> players = myVertexList;
     QList<Vertex*> winners;
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
     while(!players.empty()) //start
     {
         //select a vertex uniformly at random
-        int size = players.size();
-        std::uniform_int_distribution<int> distribution(0,size-1);
-        int selected_index = distribution(generator);
+        quint32 size = players.size();
+        std::uniform_int_distribution<quint32> distribution(0,size-1);
+        quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
         //get a neighbour
-        int no_neighbour = selected->getNumberEdge();
+        quint32 no_neighbour = selected->getNumberEdge();
         if (no_neighbour == 0) // if there is no neighbour, declare a winner
         {
             winners.append(selected);
@@ -134,12 +134,12 @@ void Graph::random_aggregate_with_degree_comparison()
         }
         else // else absorb
         {
-            std::uniform_int_distribution<int> distribution2(0,no_neighbour-1);
-            int selected_edge_index = distribution2(generator);
+            std::uniform_int_distribution<quint32> distribution2(0,no_neighbour-1);
+            quint32 selected_edge_index = distribution2(generator);
             Edge * e = selected->getEdge(selected_edge_index);
             Vertex * neighbour = selected->get_neighbour_fromEdge(selected_edge_index); //get the neighbour (not clean)
             Vertex * winner, * loser;
-            int selected_d = selected->getNumberEdge(), neighbour_d = neighbour->getNumberEdge();
+            quint32 selected_d = selected->getNumberEdge(), neighbour_d = neighbour->getNumberEdge();
             if (selected_d >= neighbour_d)
             {
                 winner = selected;
@@ -176,7 +176,7 @@ void Graph::random_aggregate_with_weight_comparison()
     {
         reConnectGraph();
     }
-    for (int i = 0; i < myVertexList.size(); i++)
+    for (quint32 i = 0; i < myVertexList.size(); i++)
     {
         Vertex * v = myVertexList.at(i);
         v->setWeight(v->getNumberEdge());
@@ -185,19 +185,19 @@ void Graph::random_aggregate_with_weight_comparison()
     //initialise arrays
     QList<Vertex*> players = myVertexList;
     QList<Vertex*> winners;
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
     while(!players.empty()) //start
     {
         //select a vertex uniformly at random
-        int size = players.size();
-        std::uniform_int_distribution<int> distribution(0,size-1);
-        int selected_index = distribution(generator);
+        quint32 size = players.size();
+        std::uniform_int_distribution<quint32> distribution(0,size-1);
+        quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
         //get a neighbour
-        int no_neighbour = selected->getNumberEdge();
+        quint32 no_neighbour = selected->getNumberEdge();
         if (no_neighbour == 0) // if there is no neighbour, declare a winner
         {
             winners.append(selected);
@@ -207,12 +207,12 @@ void Graph::random_aggregate_with_weight_comparison()
         else // else absorb
         {
 
-            std::uniform_int_distribution<int> distribution2(0,no_neighbour-1);
-            int selected_edge_index = distribution2(generator);
+            std::uniform_int_distribution<quint32> distribution2(0,no_neighbour-1);
+            quint32 selected_edge_index = distribution2(generator);
             Edge * e = selected->getEdge(selected_edge_index);
             Vertex * neighbour = selected->get_neighbour_fromEdge(selected_edge_index); //get the neighbour (not clean)
             Vertex * winner, * loser;
-            int selected_w = selected->getWeight(), neighbour_w = neighbour->getWeight();
+            quint64 selected_w = selected->getWeight(), neighbour_w = neighbour->getWeight();
             if (selected_w >= neighbour_w)
             {
                 winner = selected;
@@ -254,19 +254,19 @@ void Graph::random_aggregate_with_neighbour_initial_degree_bias()
     QList<Vertex*> players = myVertexList;
     QList<Vertex*> winners;
   //  QSequentialAnimationGroup * group_anim = new QSequentialAnimationGroup;
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
     while(!players.empty()) //start
     {
         //select a vertex uniformly at random
-        int size = players.size();
-        std::uniform_int_distribution<int> distribution(0,size-1);
-        int selected_index = distribution(generator);
+        quint32 size = players.size();
+        std::uniform_int_distribution<quint32> distribution(0,size-1);
+        quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
         //get a neighbour
-        int no_neighbour = selected->getNumberEdge();
+        quint32 no_neighbour = selected->getNumberEdge();
         if (no_neighbour == 0) // if there is no neighbour, declare a winner
         {
             winners.append(selected);
@@ -305,19 +305,19 @@ void Graph::random_aggregate_with_neighbour_CURRENT_degree_bias()
     QList<Vertex*> players = myVertexList;
     QList<Vertex*> winners;
 
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
     while(!players.empty()) //start
     {
         //select a vertex uniformly at random
-        int size = players.size();
-        std::uniform_int_distribution<int> distribution(0,size-1);
-        int selected_index = distribution(generator);
+        quint32 size = players.size();
+        std::uniform_int_distribution<quint32> distribution(0,size-1);
+        quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
         //get a neighbour
-        int no_neighbour = selected->getNumberEdge();
+        quint32 no_neighbour = selected->getNumberEdge();
         if (no_neighbour == 0) // if there is no neighbour, declare a winner
         {
             winners.append(selected);
@@ -356,19 +356,19 @@ void Graph::random_aggregate_highest_CURRENT_degree_neighbour()
     QList<Vertex*> players = myVertexList;
     QList<Vertex*> winners;
    // QSequentialAnimationGroup * group_anim = new QSequentialAnimationGroup;
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
     while(!players.empty()) //start
     {
         //select a vertex uniformly at random
-        int size = players.size();
-        std::uniform_int_distribution<int> distribution(0,size-1);
-        int selected_index = distribution(generator);
+        quint32 size = players.size();
+        std::uniform_int_distribution<quint32> distribution(0,size-1);
+        quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
         //get a neighbour
-        int no_neighbour = selected->getNumberEdge();
+        quint32 no_neighbour = selected->getNumberEdge();
         if (no_neighbour == 0) // if there is no neighbour, declare a winner
         {
             winners.append(selected);
@@ -379,7 +379,7 @@ void Graph::random_aggregate_highest_CURRENT_degree_neighbour()
         {
             Edge * e = selected->getHighestDegreeNeighbour();
             Vertex * neighbour = selected->get_neighbour_fromEdge(e);
-            int dv = selected->getNumberEdge(), du = neighbour->getNumberEdge();
+            quint32 dv = selected->getNumberEdge(), du = neighbour->getNumberEdge();
             Vertex * winner, * loser;
             if (dv >= du)
             {
@@ -424,19 +424,19 @@ void Graph::random_aggregate_with_minimum_weight_neighbour()
     QList<Vertex*> players = myVertexList;
     QList<Vertex*> winners;
    // QSequentialAnimationGroup * group_anim = new QSequentialAnimationGroup;
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
     while(!players.empty()) //start
     {
         //select a vertex uniformly at random
-        int size = players.size();
-        std::uniform_int_distribution<int> distribution(0,size-1);
-        int selected_index = distribution(generator);
+        quint32 size = players.size();
+        std::uniform_int_distribution<quint32> distribution(0,size-1);
+        quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
         //get a neighbour
-        int no_neighbour = selected->getNumberEdge();
+        quint32 no_neighbour = selected->getNumberEdge();
         if (no_neighbour == 0) // if there is no neighbour, declare a winner
         {
             winners.append(selected);
@@ -474,7 +474,7 @@ void Graph::random_aggregate_probabilistic_lowest_degree_neighbour_destructive()
     QList<Vertex*> players = myVertexList;
     QList<Vertex*> winners;
 
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
@@ -484,14 +484,14 @@ void Graph::random_aggregate_probabilistic_lowest_degree_neighbour_destructive()
         for (int i = 0; i < players.size(); i++)
         {
             Vertex * v = players.at(i);
-            for (int j = 0; j < v->getNumberEdge(); j++)
+            for (quint32 j = 0; j < v->getNumberEdge(); j++)
                 ran_list.append(v);
         }
         if (ran_list.size() == 0)
         {
-            int size = players.size();
-            std::uniform_int_distribution<int> distribution(0,size-1);
-            int selected_index = distribution(generator);
+            quint32 size = players.size();
+            std::uniform_int_distribution<quint32> distribution(0,size-1);
+            quint32 selected_index = distribution(generator);
             Vertex * selected = players.at(selected_index);
             winners.append(selected);
             players.removeOne(selected);
@@ -503,7 +503,7 @@ void Graph::random_aggregate_probabilistic_lowest_degree_neighbour_destructive()
             quint64 selected_index = distribution(generator);
             Vertex * selected = ran_list.at(selected_index);
             //get a neighbour
-            unsigned int no_neighbour = selected->getNumberEdge();
+            quint64 no_neighbour = selected->getNumberEdge();
             if (no_neighbour == 0) // if there is no neighbour, declare a winner
             {
                 winners.append(selected);
@@ -551,7 +551,7 @@ void Graph::random_aggregate_probabilistic_candidate_with_minimum_weight_neighbo
     QList<Vertex*> players = myVertexList;
     QList<Vertex*> winners;
 
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
@@ -559,18 +559,18 @@ void Graph::random_aggregate_probabilistic_candidate_with_minimum_weight_neighbo
     {
         //select a vertex uniformly at random
         QList<Vertex*> ran_list;
-        for (int i = 0 ;i < players.size(); i++)
+        for (quint32 i = 0 ;i < players.size(); i++)
         {
             Vertex * v = players.at(i);
             quint64 w = v->getWeight();
-            for (int j = 0; j < w; j++)
+            for (quint64 j = 0; j < w; j++)
                 ran_list.append(v);
         }
         if (ran_list.size() == 0)
         {
-            int size = players.size();
-            std::uniform_int_distribution<int> distribution(0,size-1);
-            int selected_index = distribution(generator);
+            quint32 size = players.size();
+            std::uniform_int_distribution<quint32> distribution(0,size-1);
+            quint32 selected_index = distribution(generator);
             Vertex * selected = players.at(selected_index);
             winners.append(selected);
             players.removeOne(selected);
@@ -583,7 +583,7 @@ void Graph::random_aggregate_probabilistic_candidate_with_minimum_weight_neighbo
             quint64 selected_index = distribution(generator);
             Vertex * selected = ran_list.at(selected_index);
             //get a neighbour
-            int no_neighbour = selected->getNumberEdge();
+            quint32 no_neighbour = selected->getNumberEdge();
             if (no_neighbour == 0) // if there is no neighbour, declare a winner
             {
                 winners.append(selected);
@@ -629,7 +629,7 @@ void Graph::random_aggregate_greedy_max_degree()
     QList<Vertex*> players = myVertexList;
     QList<Vertex*> winners;
    // QSequentialAnimationGroup * group_anim = new QSequentialAnimationGroup;
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
@@ -658,7 +658,7 @@ void Graph::random_aggregate_greedy_max_degree()
         int selected_index = distribution(generator);
         Vertex * selected = ran_list.at(selected_index);
         //get a neighbour
-        int no_neighbour = selected->getNumberEdge();
+        quint32 no_neighbour = selected->getNumberEdge();
         if (no_neighbour == 0) // if there is no neighbour, declare a winner
         {
             winners.append(selected);
@@ -704,7 +704,7 @@ void Graph::random_aggregate_greedy_max_weight()
     QList<Vertex*> players = myVertexList;
     QList<Vertex*> winners;
 
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
@@ -734,7 +734,7 @@ void Graph::random_aggregate_greedy_max_weight()
         int selected_index = distribution(generator);
         Vertex * selected = ran_list.at(selected_index);
         //get a neighbour
-        int no_neighbour = selected->getNumberEdge();
+        quint32 no_neighbour = selected->getNumberEdge();
         if (no_neighbour == 0) // if there is no neighbour, declare a winner
         {
             winners.append(selected);
@@ -788,19 +788,19 @@ void Graph::random_aggregate_with_highest_triangulated_vertex()
     QList<Vertex*> players = myVertexList;
     QList<Vertex*> winners;
    // QSequentialAnimationGroup * group_anim = new QSequentialAnimationGroup;
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
     while(!players.empty()) //start
     {
         //select a vertex uniformly at random
-        int size = players.size();
-        std::uniform_int_distribution<int> distribution(0,size-1);
-        int selected_index = distribution(generator);
+        quint32 size = players.size();
+        std::uniform_int_distribution<quint32> distribution(0,size-1);
+        quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
         //get a neighbour
-        int no_neighbour = selected->getNumberEdge();
+        quint32 no_neighbour = selected->getNumberEdge();
         if (no_neighbour == 0) // if there is no neighbour, declare a winner
         {
             winners.append(selected);
@@ -859,16 +859,16 @@ void Graph::random_aggregate_retain_vertex_using_triangulation()
     }
     //initialise arrays
     QList<Vertex*> players = myVertexList;
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
     while(!players.empty()) //start
     {
         //select a vertex uniformly at random
-        int size = players.size();
-        std::uniform_int_distribution<int> distribution(0,size-1);
-        int selected_index = distribution(generator);
+        quint32 size = players.size();
+        std::uniform_int_distribution<quint32> distribution(0,size-1);
+        quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
        // Edge * e = selected->getProbabilisticTriangulationCoeffVertex();
         Edge * e = selected->getMostMutualVertex();
@@ -908,17 +908,17 @@ void Graph::random_aggregate_retain_vertex_using_probabilistic_triangulation()
     //initialise arrays
     QList<Vertex*> players = myVertexList;
     QList<Vertex*> winners;
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
     while(!players.empty()) //start
     {
         //select a vertex uniformly at random
-        int size = players.size();
-        std::uniform_int_distribution<int> distribution(0,size-1);
+        quint32 size = players.size();
+        std::uniform_int_distribution<quint32> distribution(0,size-1);
 
-        int selected_index = distribution(generator);
+        quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
         Edge * e = selected->getProbabilisticTriangulationCoeffVertex();
         Vertex * neighbour, * winner, * loser;
@@ -961,17 +961,17 @@ void Graph::random_aggregate_retain_vertex_using_triangulation_times_weight()
     //initialise arrays
     QList<Vertex*> players = myVertexList;
     QList<Vertex*> winners;
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
     while(!players.empty()) //start
     {
         //select a vertex uniformly at random
-        int size = players.size();
-        std::uniform_int_distribution<int> distribution(0,size-1);
+        quint32 size = players.size();
+        std::uniform_int_distribution<quint32> distribution(0,size-1);
 
-        int selected_index = distribution(generator);
+        quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
         Edge * e = selected->getProbabilisticTriangulationAndWeightVertex();
         if (e == 0)
@@ -1019,16 +1019,16 @@ void Graph::random_aggregate_retain_vertex_using_triangulation_of_cluster()
     }
     //initialise arrays
     QList<Vertex*> players = myVertexList;
-    int t = 0;
+    quint32 t = 0;
     QTime t0;
     t0.start();
 
     while(!players.empty()) //start
     {
         //select a vertex uniformly at random
-        int size = players.size();
-        std::uniform_int_distribution<int> distribution(0,size-1);
-        int selected_index = distribution(generator);
+        quint32 size = players.size();
+        std::uniform_int_distribution<quint32> distribution(0,size-1);
+        quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
         Edge * e = selected->getHighestTriangulateCluster();
         Vertex * neighbour, * winner, * loser;
@@ -1078,6 +1078,7 @@ void Graph::read_large_graph_with_ground_truth_communities()
 {
     //testing
     //q
+    /*
     for (int i = 0; i < 6; i++)
     {
         Vertex * v = new Vertex;
@@ -1200,13 +1201,13 @@ void Graph::reindexing()
     QTextStream out(&file);
     //edge are Source Target Seperated by tab \t
     //begin writing edge
-    for (int i = 0; i < myEdgeList.size(); i++)
+    for (quint32 i = 0; i < myEdgeList.size(); i++)
     {
         Edge * e = myEdgeList.at(i);
         Vertex * from = e->fromVertex();
         Vertex * to = e->toVertex();
-        int dumex_v = myVertexList.indexOf(from);
-        int dumex_u = myVertexList.indexOf(to);
+        quint32 dumex_v = myVertexList.indexOf(from);
+        quint32 dumex_u = myVertexList.indexOf(to);
         if (dumex_v == dumex_u)
         {
             qDebug() << "Error: Self Loop Edge";
@@ -1221,10 +1222,10 @@ void Graph::reindexing()
     QFile vFile(originalIndexPath);
     vFile.open(QFile::WriteOnly | QFile::Text);
     QTextStream out2(&vFile);
-    for (int i = 0; i < myVertexList.size(); i++)
+    for (quint32 i = 0; i < myVertexList.size(); i++)
     {
         Vertex * v = myVertexList.at(i);
-        int origin_index = v->getIndex();
+        quint32 origin_index = v->getIndex();
         out2 << i << "\t" << origin_index << endl;
     }
     vFile.close();
@@ -1245,18 +1246,18 @@ void Graph::reindexing_ground_truth()
     qDebug() << "Reindexing the SNAP Ground Truth";
     //community are seperate by \n
     //memebrs of community are seperated by \t
-    QMap<int, int> map;
-    for (int i = 0; i < myVertexList.size(); i++)
+    QMap<quint32, quint32> map;
+    for (quint32 i = 0; i < myVertexList.size(); i++)
         map.insert(myVertexList[i]->getIndex(), i); //snap_id  -> dumex_id
     //precheck ground_truth
 
-    for (int i = 0; i < ground_truth_communities.size(); i++)
+    for (quint32 i = 0; i < ground_truth_communities.size(); i++)
     {
-        QList<int> c = ground_truth_communities[i]; //SNAP index
-        for (int j = 0; j < c.size(); j++)
+        QList<quint32> c = ground_truth_communities[i]; //SNAP index
+        for (quint32 j = 0; j < c.size(); j++)
         {
             //find the appropriate dumex index
-            int snap_id = c[j];
+            quint32 snap_id = c[j];
             if (map.contains(snap_id))
             {
                 out << map.value(snap_id) << "\t";
@@ -1282,16 +1283,16 @@ void Graph::read_large_ground_truth_communities()
     QFile file(filePath);
     file.open(QFile::ReadOnly | QFile::Text);
     QTextStream in(&file);
-    int max = -1;
+    quint32 max = 0;
     while (!in.atEnd())
     {
         QStringList str = in.readLine().split('\n'); //a community
         QStringList sub_str = str[0].split('\t'); //community split by '\t'
-        QList<int> community;
-        for (int i = 0; i < sub_str.size(); i++)
+        QList<quint32> community;
+        for (quint32 i = 0; i < sub_str.size(); i++)
         {
             bool ok;
-            int indx = sub_str[i].toInt(&ok); //get vertex index
+            quint32 indx = sub_str[i].toUInt(&ok); //get vertex index
             if (ok)
             {
                 community.append(indx);
@@ -1305,7 +1306,7 @@ void Graph::read_large_ground_truth_communities()
     if (max > myVertexList.size())
         qDebug() << "Did you load the SNAP or DUMEX file?";
     //check sum
-    int n = 0;
+    quint32 n = 0;
     for (int i = 0; i < ground_truth_communities.size(); i++)
         n+=ground_truth_communities[i].size();
 
@@ -1326,31 +1327,31 @@ void Graph::read_large_ground_truth_communities()
  */
 void Graph::large_process_overlap()
 {
-    QMap<int,int> map;
+    QMap<quint32,quint32> map;
     for (int i = 0; i < ground_truth_communities.size(); i++)
     {
-        QList<int> c = ground_truth_communities[i];
+        QList<quint32> c = ground_truth_communities[i];
         for(int j = 0; j < c.size(); j++)
         {
-            int id = c[j];
+            quint32 id = c[j];
             if (!map.contains(id))
                 map.insert(id,i);
             else
                 map.insertMulti(id, i);
         }
     }
-    QList<int> keys = map.keys();
+    QList<quint32> keys = map.keys();
     for (int k = 0; k < keys.size(); k++)
     {
-        int id = keys[k];
-        QList<int> comms = map.values(id);
+        quint32 id = keys[k];
+        QList<quint32> comms = map.values(id);
         if (comms.size() > 1) //belong to more than 1 community
         {
-            int largest_comm_size = -1, chosen_comm = -1;
+            quint32 largest_comm_size = 0, chosen_comm = 0;
             for (int i = 0; i < comms.size(); i++)
             {
-                int cid = comms[i];
-                int c_size = ground_truth_communities[cid].size();
+                quint32 cid = comms[i];
+                quint32 c_size = ground_truth_communities[cid].size();
                 if (c_size > largest_comm_size)
                 {
                     largest_comm_size = c_size;
@@ -1368,7 +1369,7 @@ void Graph::large_process_overlap()
         }
     }
     //final check
-    int n = 0;
+    quint32 n = 0;
     for (int i = 0; i < ground_truth_communities.size(); i++)
         n += ground_truth_communities[i].size();
     qDebug() << n;
@@ -1422,8 +1423,8 @@ void Graph::read_DUMEX_input(QString dirPath)
     QTextStream vin(&vfile);
     QStringList str = vin.readLine().split('\t');
     bool load;
-    global_v = str[0].toInt(&load);
-    global_e = str[1].toInt(&load);
+    global_v = str[0].toUInt(&load);
+    global_e = str[1].toUInt(&load);
     if (!load)
     {
         qDebug() << "ERROR LOADING V FILE";
@@ -1433,12 +1434,12 @@ void Graph::read_DUMEX_input(QString dirPath)
     //READ E FILE
     efile.open(QFile::ReadOnly | QFile::Text);
     QTextStream ein(&efile);
-    QList<QPair<int,int> > edge;
+    QList<QPair<quint32,quint32> > edge;
     while (!ein.atEnd())
     {
         QStringList str = ein.readLine().split('\t');
         bool ok;
-        int v1 = str[0].toInt(&ok), v2 = str[1].toInt(&ok);
+        quint32 v1 = str[0].toUInt(&ok), v2 = str[1].toUInt(&ok);
         if (ok)
         {
             edge.append(qMakePair(v1,v2));
@@ -1479,17 +1480,17 @@ void Graph::read_DUMEX_input(QString dirPath)
     qDebug() << "FINISHED RELOAD SNAP INDICES!";
     */
     //create Vertex and Edge object DECAPREATED
-    for (int i = 0; i < global_v; i++)
+    for (quint32 i = 0; i < global_v; i++)
     {
         Vertex * v = new Vertex;
         v->setIndex(i);
         myVertexList.append(v);
     }
 
-    for (int i = 0; i < global_e; i++)
+    for (quint32 i = 0; i < global_e; i++)
     {
-        QPair<int,int> p = edge[i];
-        int from = p.first, to = p.second;
+        QPair<quint32,quint32> p = edge[i];
+        quint32 from = p.first, to = p.second;
         Vertex * vfrom = myVertexList.at(from);
         Vertex * vto = myVertexList.at(to);
         Edge * e = new Edge(vfrom,vto,i);
@@ -1508,16 +1509,16 @@ void Graph::read_DUMEX_input(QString dirPath)
         QFile tfile(t_file);
         tfile.open(QFile::ReadOnly | QFile::Text);
         QTextStream tin(&tfile);
-        int max = -1;
+        quint32 max = 0;
         while (!tin.atEnd())
         {
             QStringList str = tin.readLine().split('\n'); //a community
             QStringList sub_str = str[0].split('\t'); //community split by '\t'
-            QList<int> community;
+            QList<quint32> community;
             for (int i = 0; i < sub_str.size(); i++)
             {
                 bool ok;
-                int indx = sub_str[i].toInt(&ok); //get vertex index
+                quint32 indx = sub_str[i].toUInt(&ok); //get vertex index
                 if (ok)
                 {
                     community.append(indx);
@@ -1531,7 +1532,7 @@ void Graph::read_DUMEX_input(QString dirPath)
         if (max > myVertexList.size())
             qDebug() << "Did you load the SNAP or DUMEX file?";
         //check sum
-        int n = 0;
+        quint32 n = 0;
         for (int i = 0; i < ground_truth_communities.size(); i++)
             n+=ground_truth_communities[i].size();
 
@@ -1542,11 +1543,11 @@ void Graph::read_DUMEX_input(QString dirPath)
         qDebug() << "FINISHED! Number of Comm: " << ground_truth_communities.size();
         tfile.close();
         //check,
-        QSet<int> clustered;
+        QSet<quint32> clustered;
 
         for (int i = 0; i < ground_truth_communities.size(); i++)
         {
-            QList<int> c = ground_truth_communities[i];
+            QList<quint32> c = ground_truth_communities[i];
             for (int j = 0; j < c.size(); j++)
             {
                 if (!clustered.contains(c[j]))
@@ -1555,13 +1556,13 @@ void Graph::read_DUMEX_input(QString dirPath)
                     qDebug() << "ERROR: index > size";
             }
         }
-        for (int i = 0; i < myVertexList.size(); i++)
+        for (quint32 i = 0; i < myVertexList.size(); i++)
         {
             if (!clustered.contains(i))
                 large_excluded.insert(i);
         }
         //reset index
-        for (int i = 0; i < myVertexList.size(); i++)
+        for (quint32 i = 0; i < myVertexList.size(); i++)
         {
             myVertexList[i]->setIndex(i);
         }
@@ -1588,19 +1589,19 @@ void Graph::large_graph_parse_result()
         qDebug() << "WINNER SET IS EMPTY";
         return;
     }
-    QList<QList<int> > C;
+    QList<QList<quint32> > C;
     //qDebug() << "C: " << centroids.size();
     for (int i = 0; i < centroids.size(); i++)
     {
-        QList<int> c;
+        QList<quint32> c;
         Vertex * v = centroids.at(i);
-        int v_i = v->getIndex();
+        quint32 v_i = v->getIndex();
         if (!large_excluded.contains(v_i))
             c.append(v_i);
         QList<Vertex*> absorbed = v->getAbsorbedList();
         for (int j = 0; j < absorbed.size(); j++)
         {
-            int u_i = absorbed[j]->getIndex();
+            quint32 u_i = absorbed[j]->getIndex();
             if (!large_excluded.contains(u_i))
                 c.append(u_i); //get the SNAP index
         }
@@ -1613,7 +1614,7 @@ void Graph::large_graph_parse_result()
     large_result = C;
     C.clear();
     //count number of unique elements in RESULT and in Ground_truth
-    int uniq = count_unique_element();
+    quint32 uniq = count_unique_element();
     if (uniq > 0)
         LARGE_compute_cluster_matching(uniq);
     else
@@ -1633,18 +1634,18 @@ void Graph::large_parse_retain_result()
 
     for (int i = 0; i < hierarchy.size(); i++)
     {
-        QPair<int,int> p = hierarchy.at(i);
+        QPair<quint32,quint32> p = hierarchy.at(i);
         boost::add_edge(p.first, p.second, g);
     }
 
-    std::vector<int> component(boost::num_vertices(g));
-    int num = boost::connected_components(g, &component[0]);
+    std::vector<quint32> component(boost::num_vertices(g));
+    quint32 num = boost::connected_components(g, &component[0]);
     qDebug() << "Number of Clusters:" << num;
     //compute indices
-    QList<QList<int> > clusters;
+    QList<QList<quint32> > clusters;
     for (int i = 0 ; i < num; i++)
     {
-        QList<int> c;
+        QList<quint32> c;
         clusters.append(c);
     }
 
@@ -1652,7 +1653,7 @@ void Graph::large_parse_retain_result()
     {
         if (!large_excluded.contains(i))
         {
-            QList<int> c = clusters[component[i]];
+            QList<quint32> c = clusters[component[i]];
             c.append(i);
             clusters.replace(component[i],c);
         }
@@ -1669,15 +1670,15 @@ void Graph::large_parse_retain_result()
  * @brief Graph::count_unique_element
  * @return True if match
  */
-int Graph::count_unique_element()
+quint32 Graph::count_unique_element()
 {
-    QSet<int> res, truth;
-    int sum = 0;
+    QSet<quint32> res, truth;
+    quint32 sum = 0;
     for (int i = 0 ; i < large_result.size(); i++)
     {
         for (int j = 0; j < large_result[i].size(); j++)
         {
-            int v = large_result[i][j];
+            quint32 v = large_result[i][j];
             sum++;
             if (!res.contains(v))
                 res.insert(v);
@@ -1687,7 +1688,7 @@ int Graph::count_unique_element()
     {
         for (int j = 0; j < ground_truth_communities[i].size(); j++)
         {
-            int v = ground_truth_communities[i][j];
+            quint32 v = ground_truth_communities[i][j];
             if (!truth.contains(v))
                 truth.insert(v);
         }
@@ -1710,7 +1711,7 @@ int Graph::count_unique_element()
 /**
  * @brief Graph::LARGE_compute_cluster_matching
  */
-void Graph::LARGE_compute_cluster_matching(int n)
+void Graph::LARGE_compute_cluster_matching(quint32 n)
 {
     //check sum not available since overlap
     //checking ground truth
@@ -1762,7 +1763,7 @@ void Graph::LARGE_compute_cluster_matching(int n)
  * @param result
  * @return
  */
-double Graph::LARGE_compute_Pairwise_efficient(int n)
+double Graph::LARGE_compute_Pairwise_efficient(quint32 n)
 {
     qDebug() << "STARTING Pairwise Indices ...";
     qDebug() << "Clusters:" << large_result.size();
@@ -1776,12 +1777,12 @@ double Graph::LARGE_compute_Pairwise_efficient(int n)
     for (int i = 0; i < row; i++)
     {
         quint64 sum_row = 0;
-        QSet<int> X = ground_truth_communities[i].toSet();
+        QSet<quint32> X = ground_truth_communities[i].toSet();
         for (int j = 0; j < column; j++)
         {
-            QSet<int> Y = large_result[j].toSet();
-            QSet<int> copy = X;
-            int entry = copy.intersect(Y).size();
+            QSet<quint32> Y = large_result[j].toSet();
+            QSet<quint32> copy = X;
+            quint32 entry = copy.intersect(Y).size();
             nij_minus += (quint64)entry*(entry-1); // nij(nij-1)
             nij_square += (quint64)entry*entry; // nij^2
             nij_choose_2 += (quint64) entry*(entry-1)/2; //(nij choose 2) for adjust rand
@@ -1969,12 +1970,12 @@ void Graph::LARGE_reload_edges()
     //else
     efile.open(QFile::ReadOnly | QFile::Text);
     QTextStream ein(&efile);
-    QList<QPair<int,int> > edge;
+    QList<QPair<quint32,quint32> > edge;
     while (!ein.atEnd())
     {
         QStringList str = ein.readLine().split('\t');
         bool ok;
-        int v1 = str[0].toInt(&ok), v2 = str[1].toInt(&ok);
+        quint32 v1 = str[0].toUInt(&ok), v2 = str[1].toUInt(&ok);
         if (ok)
         {
             edge.append(qMakePair(v1,v2));
@@ -1986,8 +1987,8 @@ void Graph::LARGE_reload_edges()
     qDebug() << "Loading Edges ...";
     for (int i = 0; i < edge.size(); i++)
     {
-        QPair<int,int> p = edge[i];
-        int from = p.first, to = p.second;
+        QPair<quint32,quint32> p = edge[i];
+        quint32 from = p.first, to = p.second;
         Vertex * vfrom = myVertexList.at(from);
         Vertex * vto = myVertexList.at(to);
         Edge * e = new Edge(vfrom,vto,i);
@@ -2113,18 +2114,18 @@ double Graph::LARGE_compute_modularity()
     double Q = 0.0;
     for (int i = 0; i < large_result.size(); i++)
     {
-        QList<int> c = large_result[i];
-        QSet<int> vi = c.toSet();
+        QList<quint32> c = large_result[i];
+        QSet<quint32> vi = c.toSet();
         quint64 intra = 0, inter = 0;
         for (int j = 0; j < c.size(); j++)
         {
-            int id = c[j];
+            quint32 id = c[j];
             Vertex * v = myVertexList.at(id);
             QList<Edge*> adj = v->getAllEdge();
             for (int k = 0; k < adj.size(); k++)
             {
                 Vertex * other = v->get_neighbour_fromEdge(adj[k]);
-                int other_id = other->getIndex();
+                quint32 other_id = other->getIndex();
                 if (vi.contains(other_id))
                     intra++;
                 else

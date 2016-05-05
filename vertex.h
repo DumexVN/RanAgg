@@ -11,14 +11,14 @@ class Vertex
 public:
     Vertex();
     ~Vertex();
-    void setIndex(const quint64 &number);
-    quint64 getIndex() const;
+    void setIndex(const quint32 &number);
+    quint32 getIndex() const;
 
-    void addAdj(const quint64 &index);
-    quint64 getNumAdj() const;
+    void addAdj(const quint32 &index);
+    quint32 getNumAdj() const;
 
-    int getOneNeighbourIndex(const quint64 &index);
-    void removeAdj(const quint64 &index);
+    quint32 getOneNeighbourIndex(const quint32 &index);
+    void removeAdj(const quint32 &index);
     void removeAll();
 
     void setWeight(const quint64 &w);
@@ -27,17 +27,17 @@ public:
 
     void addEdge(Edge *edge);
     void removeEdge(Edge *edge);
-    quint64 getNumberEdge() const;
+    quint32 getNumberEdge() const;
     void remove_all_edges();
 
-    void absorb_removeEdge(quint64 edge_index);
+    void absorb_removeEdge(quint32 edge_index);
     void absorb_removeEdge(Edge * e);
     void absorb_removeVertex_retainEdge(Edge * e);
     void absorb_retainEdge(Edge * e);
     void absorb_retainEdge_setParentPointer(Edge * e);
     void absorb_singleton(Vertex * v);
 
-    Edge * getEdge(int edgeIndex) const;
+    Edge * getEdge(quint32 edgeIndex) const;
     Edge * getWeightedProbabilisticEdge();
     Edge * getDegreeProbabilisticEdge();
     Edge * getEdgeFromVertex(Vertex * v2);
@@ -51,7 +51,7 @@ public:
     QList<Edge*> getAllEdge() const;
 
     Vertex * aggregate_get_degree_biased_neighbour();
-    Vertex *get_neighbour_fromEdge(int edge_index);
+    Vertex *get_neighbour_fromEdge(quint32 edge_index);
     Vertex *get_neighbour_fromEdge(Edge * e);
 
 
@@ -62,16 +62,16 @@ public:
     void incrementNoChild();
     void setExtraWeight(const quint64 &w);
     quint64 getExtraWeight() const;
-    int getNoChild() const;
+    quint32 getNoChild() const;
 
     QList<Vertex*> getAbsorbedList();
-    QList<int> getNeighbourIndexes();
+    QList<quint32> getNeighbourIndexes();
 
     void set_vertex_as_absorbed(bool val);
     bool is_vertex_absorbed() const;
     bool is_vertex_dragged_along() const;
 
-    int getNoOfTriangles(Vertex * v);
+    quint32 getNoOfTriangles(Vertex * v);
     QList<Vertex*> getMyCluster();
     void addMemberToCluster(Vertex * v);
     void addMemberToCluster(QList<Vertex*> v);
@@ -86,18 +86,18 @@ public:
 private:
 
     Vertex * parent;
-    QList<int> myNeighbours;
+    QList<quint32> myNeighbours;
     QList<Vertex*> absorbed;
 
 protected:
     QList<Edge *> myEdge;
     QList<Vertex*> myCluster;
 
-    int myIndex;
+    quint32 myIndex;
     quint64 myWeight;
     bool isDraggedAlong;
     bool isAbsorbed;
-    int noOfChild;
+    quint32 noOfChild;
     quint64 ExtraWeight;
     int myRealCommunity;
 };

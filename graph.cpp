@@ -15,11 +15,19 @@
 #include <boost/graph/circle_layout.hpp>
 #include <boost/graph/strong_components.hpp>
 #include <boost/graph/graph_utility.hpp>
+#include <boost/graph/clustering_coefficient.hpp>
+#include <boost/graph/exterior_property.hpp>
 
 #include <QTime>
 
 std::random_device rd;
 std::mt19937 generator(rd());
+
+
+QString globalDirPath;
+qint32 global_e = 0;
+qint32 global_v = 0;
+static int no_run = 0;
 
 Graph::Graph()
 {   //set up graphic scenes to display all kinds of stuff
@@ -27,7 +35,320 @@ Graph::Graph()
     generator.seed(sqrt(QTime::currentTime().msec()*QTime::currentTime().msec()));
 }
 
+
 // ----------------------- GRAPH GENERATOR -------------------------------------------
+
+/** READ GML FILE AND PARSE FOR EDGE FILE
+ * Otherwise GML takes way too long to parse
+ * @brief Graph::read_GML_file
+ * @param filePath
+ */
+void Graph::read_GML_file(QString filePath)
+{
+    QFile file(filePath);
+    if (!file.exists())
+    {
+        qDebug() << "File Not Found";
+        return;
+    }
+    GMLpath = filePath;
+    QFileInfo fileInfo(file);
+    QDir dir = fileInfo.absoluteDir();
+    if (!file.exists())
+    {
+        qDebug() << "FILE NOT FOUND";
+        return;
+    }
+
+    file.open(QFile::ReadOnly | QFile::Text);
+    QTextStream in(&file);
+    QString all = in.readAll();
+    QStringList split = all.split("\n");
+    QString directed = split[3];
+    if (!directed.contains("0"))
+    {
+        qDebug() << "DIRECTED GRAPH";
+        return; //directed graph
+    }
+    QSet<int> v;
+    QList<QPair<int,int> > my_edge;
+    QStringListIterator iter(split);
+    while(iter.hasNext())
+    {
+        QString str = iter.next();
+        if (str.contains("node") || str.contains("edge"))
+        {
+            bool node = str.contains(" node");
+            bool edge = str.contains(" edge");
+            if (!node && !edge)
+            {
+                qDebug() << "FILE FORMATE ERROR";
+                return;
+            }
+            else
+                iter.next();
+            if (node)
+            {
+                while (iter.peekNext() != "  ]")
+                {
+                    QStringList cur = iter.next().split(" ");
+                    if (cur.contains("id"))
+                    {
+                        bool ok;
+                        int i = cur.last().toInt(&ok);
+                        if (ok)
+                        {
+                            Vertex * v = new Vertex;
+                            v->setIndex(i);
+                            myVertexList.append(v);
+                        }
+                        else
+                            qDebug() << "Error While Parsing GML: id not recognised!";
+                    }
+                    else if (cur.contains("label"))
+                    {
+                        int index = cur.indexOf("label");
+                        index++;
+                        QString label;
+                        for (index; index < cur.size(); index++)
+                        {
+                            label.append(cur.at(index));
+                        }
+                    }
+                    else if (cur.contains("value"))
+                    {
+                        bool ok;
+                        //vertex_weight.append(cur.last().toInt(&ok));
+                        if (!ok)
+                        {
+                            QString c = cur.last();
+                            //QString name = vertex_label.last();
+                            QString parsed_name = "";
+                           // for (int i = 1; i < name.size()-1;i++) parsed_name += name[i];
+                        }
+                    }
+                }
+            }
+            else if (edge)
+            {
+                int source = -1, des = -1;
+                while (iter.peekNext() != "  ]")
+                {
+                    QStringList cur = iter.next().split(" ");
+                    if (cur.contains("source"))
+                    {
+                        source = cur.last().toInt();
+                    }
+                    else if (cur.contains("target"))
+                    {
+                        des = cur.last().toInt();
+                    }
+                    else if (cur.contains("value"))
+                    {
+                      //  edge_weight.append(cur.last().toInt());
+                    }
+                }
+                if (source != -1 && des != -1)
+                {
+                    QPair<int,int> e = qMakePair(source,des);
+                    QPair<int,int> reverse = qMakePair(des,source);
+                    if (!my_edge.contains(e) && !my_edge.contains(reverse))
+                    {
+                        my_edge.append(e);
+                        my_edge.append(reverse);
+                    }
+                    else
+                        qDebug() << "Error While Parsing GML: Duplicate Edge!";
+                }
+                else
+                {
+                    qDebug() << "EDGE ERROR" << source << des;
+                    return;
+                }
+            }
+            else
+            {
+                qDebug() << "ERROR: UNKNOWN ERROR WHILE PARSING! RETURNING";
+                return;
+            }
+
+        }
+        else
+            continue;
+    }
+
+    for (int i = 0; i < my_edge.size(); i+= 2)
+    {
+        QPair<int,int> e = my_edge[i];
+        int v = e.first, u = e.second;
+        Vertex * from = myVertexList[v];
+        Vertex * to = myVertexList[u];
+        Edge * newe = new Edge(from,to,i/2);
+        myEdgeList.append(newe);
+    }
+
+    qDebug() << "GML Parsed Successfully!";
+    qDebug() << "V: " << myVertexList.size() << "; E: " << myEdgeList.size();
+    save_edge_file_from_GML();
+
+}
+
+
+/** Save GML file as Simple .txt File for faster parsing
+ * @brief Graph::save_edge_file_from_GML
+ */
+void Graph::save_edge_file_from_GML()
+{
+    qDebug() << "No Problem Detected! Saving Edge File";
+    if (GMLpath.size() == 0)
+    {
+        qDebug() << "GML Path Has Not Been Set";
+    }
+    else
+    {
+        QFileInfo info(GMLpath);
+        QDir dir = info.absoluteDir();
+        QFile vFile(dir.absolutePath() + "/vertex_file.txt");
+        vFile.open(QIODevice::WriteOnly | QIODevice::Text);
+        QTextStream os(&vFile);
+        os << QString::number(myVertexList.size()) << '\t' << QString::number(myEdgeList.size()) << endl;
+        vFile.close();
+
+        QFile outFile(dir.absolutePath() + "/edge_file.txt");
+        outFile.open(QIODevice::WriteOnly | QIODevice::Text);
+        QTextStream ts(&outFile);
+        for (int i = 0; i < myEdgeList.size(); i++)
+        {
+            int from = myEdgeList[i]->fromVertex()->getIndex(), to = myEdgeList[i]->toVertex()->getIndex();
+            ts << QString::number(from) << '\t' << QString::number(to) << endl;
+        }
+        outFile.close();
+    }
+}
+
+/** Just Save the Edge to current Dir
+ * @brief Graph::save_current_run_as_edge_file
+ */
+void Graph::save_current_run_as_edge_file(QString fileName)
+{
+    QFile outFile(fileName);
+    if (outFile.exists())
+        outFile.remove();
+    outFile.open(QIODevice::WriteOnly | QIODevice::Text);
+    QTextStream ts(&outFile);
+    ts << "Source\tTarget" << endl;
+    for (int i = 0; i < myEdgeList.size(); i++)
+    {
+        quint32 from = myEdgeList[i]->fromVertex()->getIndex(), to = myEdgeList[i]->toVertex()->getIndex();
+        ts << QString::number(from) << '\t' << QString::number(to) << endl;
+    }
+    outFile.close();
+}
+
+/**
+ * @brief Graph::read_simple_edge
+ * @param dirPath
+ */
+void Graph::read_simple_edge(QString dirPath)
+{
+    QDir dir(dirPath);
+    if (!dir.exists())
+    {
+        qDebug() << "DIR NOT EXISTS! Terminating ...";
+        return;
+    }
+    globalDirPath = dirPath;
+    QStringList filters;
+    filters << "*.txt";
+    QFileInfoList file = dir.entryInfoList(filters);
+    QString v_file, e_file;
+    for (int i = 0; i < file.size(); i++)
+    {
+        QFileInfo f = file.at(i);
+        QString name = f.fileName();
+        if (name.contains("edge"))
+            e_file = f.absoluteFilePath();
+        else if (name.contains("vertex"))
+            v_file = f.absoluteFilePath();
+        else
+        {
+            qDebug() << "While READING FILES: File not Recognised!";
+            qDebug() << file[i].fileName() << " Skipping this File";
+        }
+    }
+
+    //reload original vertices
+    //Parsing
+    QFile efile(e_file), vfile(v_file);
+    if (!efile.exists() || !vfile.exists())
+    {
+        qDebug() << "FILE NOT FOUND! Recheck! Terminating ...";
+        return;
+    }
+    //else
+    vfile.open(QFile::ReadOnly | QFile::Text);
+    QTextStream vin(&vfile);
+    QStringList str = vin.readLine().split('\t');
+    bool load;
+    global_v = str[0].toUInt(&load);
+    global_e = str[1].toUInt(&load);
+    if (!load)
+    {
+        qDebug() << "ERROR LOADING V FILE";
+        return;
+    }
+    qDebug() << "Graph: " << "V: " <<  global_v << "; E: " << global_e;
+    vfile.close();
+    //READ E FILE
+    efile.open(QFile::ReadOnly | QFile::Text);
+    QTextStream ein(&efile);
+    QList<QPair<quint32,quint32> > edge;
+    while (!ein.atEnd())
+    {
+        QStringList str = ein.readLine().split('\t');
+        bool ok;
+        quint32 v1 = str[0].toUInt(&ok), v2 = str[1].toUInt(&ok);
+        if (ok)
+        {
+            edge.append(qMakePair(v1,v2));
+        }
+    }
+    efile.close();
+    qDebug() << "Generating Vertex and Edges ...";
+    // adding ve edge independent of global file
+    for (int i = 0; i < global_v; i++ )
+    {
+        Vertex * v = new Vertex;
+        v->setIndex(i);
+        myVertexList.append(v);
+    }
+
+    for (int i = 0; i < edge.size(); i++)
+    {
+        QPair<int,int> e = edge[i];
+        int v = e.first, u = e.second;
+        Vertex * from = myVertexList[v];
+        Vertex * to = myVertexList[u];
+        Edge * newe = new Edge(from,to,i/2);
+        myEdgeList.append(newe);
+    }
+
+
+    bool fit = false;
+    if (myVertexList.size() == global_v && myEdgeList.size() == global_e)
+        fit = true;
+    qDebug() << "Check Sum" << fit;
+    if (fit)
+    {
+        graphIsReady = true;
+    }
+    else
+    {
+        qDebug() << "Preset V: " << global_v << "; E: " << global_e;
+        qDebug() << "Load V: " << myVertexList.size() << "; E: " << myEdgeList.size();
+    }
+
+}
 
 /*
  * RECONNECT THE GRAPH AFTER AN AGGREGATION HAS BEEN DONE
@@ -870,20 +1191,24 @@ void Graph::random_aggregate_retain_vertex_using_triangulation()
         std::uniform_int_distribution<quint32> distribution(0,size-1);
         quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
-       // Edge * e = selected->getProbabilisticTriangulationCoeffVertex();
-        Edge * e = selected->getMostMutualVertex();
-        Vertex * neighbour, * winner, * loser;
-        if (e->toVertex() == selected)
-            neighbour = e->fromVertex();
+        if (selected->getNumberEdge() == 0)
+            players.removeOne(selected);
         else
-            neighbour = e->toVertex();
+        {
+            Edge * e = selected->getMostMutualVertex();
+            Vertex * neighbour, * winner, * loser;
+            if (e->toVertex() == selected)
+                neighbour = e->fromVertex();
+            else
+                neighbour = e->toVertex();
 
-        winner = neighbour;
-        loser = selected;
-        //create the animation
-        winner->absorb_retainEdge(e);
-        hierarchy.append(qMakePair(loser->getIndex(), winner->getIndex()));
-        players.removeOne(loser);
+            winner = neighbour;
+            loser = selected;
+            //create the animation
+            winner->absorb_retainEdge(e);
+            hierarchy.append(qMakePair(loser->getIndex(), winner->getIndex()));
+            players.removeOne(loser);
+        }
         t++;
     }
     qDebug("III.a - Time elapsed: %d ms", t0.elapsed());
@@ -920,17 +1245,22 @@ void Graph::random_aggregate_retain_vertex_using_probabilistic_triangulation()
 
         quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
-        Edge * e = selected->getProbabilisticTriangulationCoeffVertex();
-        Vertex * neighbour, * winner, * loser;
-        if (e->toVertex() == selected)
-            neighbour = e->fromVertex();
+        if (selected->getNumberEdge() == 0)
+            players.removeOne(selected);
         else
-            neighbour = e->toVertex();
-        winner = neighbour;
-        loser = selected;
-        winner->absorb_retainEdge(e);
-        hierarchy.append(qMakePair(loser->getIndex(), winner->getIndex()));
-        players.removeOne(loser);
+        {
+            Edge * e = selected->getProbabilisticTriangulationCoeffVertex();
+            Vertex * neighbour, * winner, * loser;
+            if (e->toVertex() == selected)
+                neighbour = e->fromVertex();
+            else
+                neighbour = e->toVertex();
+            winner = neighbour;
+            loser = selected;
+            winner->absorb_retainEdge(e);
+            hierarchy.append(qMakePair(loser->getIndex(), winner->getIndex()));
+            players.removeOne(loser);
+        }
         t++;
     }
     qDebug("III.b - Time elapsed: %d ms", t0.elapsed());
@@ -973,25 +1303,30 @@ void Graph::random_aggregate_retain_vertex_using_triangulation_times_weight()
 
         quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
-        Edge * e = selected->getProbabilisticTriangulationAndWeightVertex();
-        if (e == 0)
-        {
-            selected->setParent(selected);
+        if (selected->getNumberEdge() == 0)
             players.removeOne(selected);
-            continue;
-        }
-        Vertex * neighbour, * winner, * loser;
-        if (e->toVertex() == selected)
-            neighbour = e->fromVertex();
         else
-            neighbour = e->toVertex();
+        {
+            Edge * e = selected->getProbabilisticTriangulationAndWeightVertex();
+            if (e == 0)
+            {
+                selected->setParent(selected);
+                players.removeOne(selected);
+                continue;
+            }
+            Vertex * neighbour, * winner, * loser;
+            if (e->toVertex() == selected)
+                neighbour = e->fromVertex();
+            else
+                neighbour = e->toVertex();
 
-        winner = neighbour;
-        loser = selected;
-        //create the animation
-        winner->absorb_retainEdge(e);
-        hierarchy.append(qMakePair(loser->getIndex(), winner->getIndex()));
-        players.removeOne(loser);
+            winner = neighbour;
+            loser = selected;
+            //create the animation
+            winner->absorb_retainEdge(e);
+            hierarchy.append(qMakePair(loser->getIndex(), winner->getIndex()));
+            players.removeOne(loser);
+        }
         t++;
     }
     qDebug("III.d - Time elapsed: %d ms", t0.elapsed());
@@ -1030,19 +1365,24 @@ void Graph::random_aggregate_retain_vertex_using_triangulation_of_cluster()
         std::uniform_int_distribution<quint32> distribution(0,size-1);
         quint32 selected_index = distribution(generator);
         Vertex * selected = players.at(selected_index);
-        Edge * e = selected->getHighestTriangulateCluster();
-        Vertex * neighbour, * winner, * loser;
-        if (e->toVertex() == selected)
-            neighbour = e->fromVertex();
+        if (selected->getNumberEdge() == 0)
+            players.removeOne(selected);
         else
-            neighbour = e->toVertex();
+        {
+            Edge * e = selected->getHighestTriangulateCluster();
+            Vertex * neighbour, * winner, * loser;
+            if (e->toVertex() == selected)
+                neighbour = e->fromVertex();
+            else
+                neighbour = e->toVertex();
 
-        winner = neighbour;
-        loser = selected;
-        //create the animation
-        winner->absorb_retainEdge(e);
-        hierarchy.append(qMakePair(loser->getIndex(), winner->getIndex()));
-        players.removeOne(loser);
+            winner = neighbour;
+            loser = selected;
+            //create the animation
+            winner->absorb_retainEdge(e);
+            hierarchy.append(qMakePair(loser->getIndex(), winner->getIndex()));
+            players.removeOne(loser);
+        }
         t++;
     }
 
@@ -1050,6 +1390,8 @@ void Graph::random_aggregate_retain_vertex_using_triangulation_of_cluster()
     large_parse_retain_result();
 
 }
+
+
 
 bool Graph::checkGraphCondition()
 {
@@ -1375,9 +1717,17 @@ void Graph::large_process_overlap()
     qDebug() << n;
 }
 
-QString globalDirPath;
-qint32 global_e = 0;
-qint32 global_v = 0;
+/** Preprocess Ground-Truth Communities
+ * Let X be the communities: X = {X1,X2,..}
+ * for every pair of communities
+ * if X1 \cap X2 >= 1/2 of X1 then merge
+ * @brief Graph::large_process_overlap_by_merge_intersection
+ */
+void Graph::large_process_overlap_by_merge_intersection()
+{
+
+}
+
 
 /** RELOAD SNAP FILE IN DUMEX FORMAT
  * @brief Graph::read_DUMEX_input
@@ -1613,12 +1963,23 @@ void Graph::large_graph_parse_result()
       */
     large_result = C;
     C.clear();
-    //count number of unique elements in RESULT and in Ground_truth
-    quint32 uniq = count_unique_element();
-    if (uniq > 0)
-        LARGE_compute_cluster_matching(uniq);
+    print_result_stats();
+    qDebug() << "- Number of Clusters: " << large_result.size();
+    if (ground_truth_communities.empty()) //for non ground truth parsing
+    {
+        qDebug() << "GROUND TRUTH COMMUNITIES HAS NOT BEEN LOADED OR GRAPH HAS NOT BEEN CLUSTERED";
+        qDebug() << "Only Modularity Can Be Calculated:";
+        LARGE_reload_edges();
+        qDebug() << "Q: " << LARGE_compute_modularity();
+    }
     else
-        qDebug() << "ERROR: NUMBER OF UNIQUE ELEMTNS IN RESULT DIFF IN GROUND TRUTH (AFTER CHECKING EXCLUDED)";
+    {   //count number of unique elements in RESULT and in Ground_truth
+        quint32 uniq = count_unique_element();
+        if (uniq > 0)
+            LARGE_compute_cluster_matching(uniq);
+        else
+            qDebug() << "ERROR: NUMBER OF UNIQUE ELEMTNS IN RESULT DIFF IN GROUND TRUTH (AFTER CHECKING EXCLUDED)";
+    }
 }
 
 /** Parse result of retain
@@ -1659,11 +2020,50 @@ void Graph::large_parse_retain_result()
         }
     }
     large_result = clusters;
-
     clusters.clear();
+    print_result_stats();
+    if (ground_truth_communities.empty()) //for non ground truth parsing
+    {
+        qDebug() << "GROUND TRUTH COMMUNITIES HAS NOT BEEN LOADED OR GRAPH HAS NOT BEEN CLUSTERED";
+        qDebug() << "Only Modularity Can Be Calculated:";
+        qDebug() << "Q: " << LARGE_compute_modularity();
+    }
+    else
+    {   //count number of unique elements in RESULT and in Ground_truth
+        quint32 uniq = count_unique_element();
+        if (uniq > 0)
+            LARGE_compute_cluster_matching(uniq);
+        else
+            qDebug() << "ERROR: NUMBER OF UNIQUE ELEMTNS IN RESULT DIFF IN GROUND TRUTH (AFTER CHECKING EXCLUDED)";
+    }
+}
 
-    LARGE_compute_Pairwise_efficient(count_unique_element());
-    qDebug() << LARGE_compute_modularity();
+void Graph::print_result_stats()
+{
+    qDebug() << "- Writing Log ...";
+    QString logPath = globalDirPath + "/log.txt";
+    QFile outFile(logPath);
+    outFile.open(QIODevice::WriteOnly | QIODevice::Append);
+    QTextStream out(&outFile);
+    //print size of clusters
+    quint32 small = 0, isolated = 0;
+    out << "****************** 1 RUN ***********************" << endl;
+    out << "Cluster#\tSize" << endl;
+    for (int i = 0; i < large_result.size(); i++)
+    {
+        quint32 size = large_result[i].size();
+        if (size == 1)
+            isolated++;
+        else if (size > 1 && size <= 3)
+            small++;
+        else
+            out << i <<'\t' << large_result[i].size() << endl;
+    }
+    out << "********************************" << endl;
+    out << "Summary: Total C:" << large_result.size() << endl
+        << "Small Size C ( < 3): " << small << "; Isolated (== 1): " << isolated;
+    outFile.close();
+    qDebug() << " - DONE!!!";
 }
 
 /** Compare NUmber of Unique Element
@@ -1904,6 +2304,38 @@ double Graph::calAdRand(QList<quint64> param)
     return ARI;
 }
 
+/** Calculate the Clustering Coeffficient, which is the average over all v
+ * Watts Algorithm
+ * @brief Graph::cal_average_clustering_coefficient
+ * @return
+ */
+double Graph::cal_average_clustering_coefficient()
+{
+    typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS> NormalGraph;
+    NormalGraph g;
+    for (int i = 0; i < myVertexList.size(); i++)
+    {
+        boost::add_vertex(g);
+    }
+    for(int i = 0;i  < myEdgeList.size(); i++)
+    {
+        Edge * e = myEdgeList.at(i);
+        int from = e->fromVertex()->getIndex(), to = e->toVertex()->getIndex();
+        boost::add_edge(from,to,g);
+    }
+    // Compute the clustering coefficients of each vertex in the graph
+    // and the mean clustering coefficient which is returned from the
+    // computation.
+    typedef boost::exterior_vertex_property<NormalGraph, float> ClusteringProperty;
+    typedef ClusteringProperty::container_type ClusteringContainer;
+    typedef ClusteringProperty::map_type ClusteringMap;
+
+    ClusteringContainer coefs(boost::num_vertices(g));
+    ClusteringMap cm(coefs, g);
+    double cc = boost::all_clustering_coefficients(g, cm);
+    return cc;
+}
+
 
 /** Reset to prepare for next run
  * @brief Graph::LARGE_reset
@@ -1936,7 +2368,14 @@ bool Graph::LARGE_reload()
     }
     //read edge only
     myEdgeList.clear();
-    LARGE_reload_edges();
+    if (no_run == 0 )
+        LARGE_reload_edges();
+    else
+    {
+        qDebug() << "- ** Reaggregation Detected! Following are results for super graph...";
+        LARGE_reload_superEdges();
+    }
+
     graphIsReady = true;
     return graphIsReady;
 }
@@ -1947,6 +2386,7 @@ bool Graph::LARGE_reload()
  */
 void Graph::LARGE_reload_edges()
 {
+    qDebug() << "- Reloading Edges ...";
     QDir dir(globalDirPath);
     QStringList filters;
     filters << "*.txt";
@@ -1971,6 +2411,7 @@ void Graph::LARGE_reload_edges()
     efile.open(QFile::ReadOnly | QFile::Text);
     QTextStream ein(&efile);
     QList<QPair<quint32,quint32> > edge;
+    ein.readLine(); //skip first line
     while (!ein.atEnd())
     {
         QStringList str = ein.readLine().split('\t');
@@ -1984,7 +2425,7 @@ void Graph::LARGE_reload_edges()
     efile.close();
     //reload original vertices
     //create Vertex and Edge object
-    qDebug() << "Loading Edges ...";
+    qDebug() << "- Now Loading Edges ...";
     for (int i = 0; i < edge.size(); i++)
     {
         QPair<quint32,quint32> p = edge[i];
@@ -1997,13 +2438,69 @@ void Graph::LARGE_reload_edges()
     edge.clear();
 }
 
+void Graph::LARGE_reload_superEdges()
+{
+    qDebug() << "- Reloading Edges ...";
+    QDir dir(globalDirPath);
+    QStringList filters;
+    filters << "*.txt";
+    QFileInfoList file = dir.entryInfoList(filters);
+    QString e_file;
+    for (int i = 0; i < file.size(); i++)
+    {
+        QFileInfo f = file.at(i);
+        QString name = f.fileName();
+        if (name.contains("superGraph"))
+            e_file = f.absoluteFilePath();
+    }
+
+    //Parsing
+    QFile efile(e_file);
+    if (!efile.exists())
+    {
+        qDebug() << "FILE NOT FOUND! Recheck! Terminating ...";
+        return;
+    }
+    //else
+    efile.open(QFile::ReadOnly | QFile::Text);
+    QTextStream ein(&efile);
+    QList<QPair<quint32,quint32> > edge;
+    ein.readLine(); //skip first line
+    while (!ein.atEnd())
+    {
+        QStringList str = ein.readLine().split('\t');
+        bool ok;
+        quint32 v1 = str[0].toUInt(&ok), v2 = str[1].toUInt(&ok);
+        if (ok)
+        {
+            edge.append(qMakePair(v1,v2));
+        }
+    }
+    efile.close();
+    //reload original vertices
+    //create Vertex and Edge object
+    qDebug() << "- Now Loading Edges ...";
+    for (int i = 0; i < edge.size(); i++)
+    {
+        QPair<quint32,quint32> p = edge[i];
+        quint32 from = p.first, to = p.second;
+        Vertex * vfrom = myVertexList.at(from);
+        Vertex * vto = myVertexList.at(to);
+        Edge * e = new Edge(vfrom,vto,i);
+        myEdgeList.append(e);
+    }
+    edge.clear();
+}
+
+
+
 /** Rerun
  * @brief Graph::LARGE_rerun
  */
 void Graph::LARGE_rerun()
 {
-    int per_agg = 3;
-    for (int i = 36; i < 17*per_agg; i++)
+    int per_agg = 5;
+    for (int i = 50; i < 17*per_agg; i++)
     {
         int agg = i/per_agg;
         qDebug() << "********* NEW RUN START BELOWS ******** ";
@@ -2025,13 +2522,11 @@ void Graph::LARGE_rerun()
         }
         else if (agg == 4)
         {
-            continue;
-            qDebug() << "Type II.a:";
+             qDebug() << "Type II.a:";
             random_aggregate_with_neighbour_initial_degree_bias();
         }
         else if (agg == 5)
         {
-            continue;
             qDebug() << "Type II.b:";
             random_aggregate_with_neighbour_CURRENT_degree_bias();
         }
@@ -2047,13 +2542,11 @@ void Graph::LARGE_rerun()
         }
         else if (agg == 8)
         {
-            continue;
             qDebug() << "Type II.e:";
             random_aggregate_probabilistic_lowest_degree_neighbour_destructive();
         }
         else if (agg == 9)
         {
-            continue;
             qDebug() << "Type II.f:";
             random_aggregate_probabilistic_candidate_with_minimum_weight_neighbour();
         }
@@ -2074,7 +2567,6 @@ void Graph::LARGE_rerun()
         }
         else if (agg == 13)
         {
-            continue;
             qDebug() << "Type III.b:";
             random_aggregate_retain_vertex_using_probabilistic_triangulation();
         }
@@ -2085,7 +2577,6 @@ void Graph::LARGE_rerun()
         }
         else if (agg == 15)
         {
-            continue;
             qDebug() << "Type III.d:";
             random_aggregate_retain_vertex_using_triangulation_times_weight();
         }
@@ -2094,6 +2585,83 @@ void Graph::LARGE_rerun()
             qDebug() << "Type III.e:";
             random_aggregate_retain_vertex_using_triangulation_of_cluster();
         }
+    }
+}
+
+/** Select Type of Aggregation to Run
+ * @brief Graph::run_aggregation_on_selection
+ * @param n
+ */
+void Graph::run_aggregation_on_selection(int n)
+{
+    switch (n) {
+    case 0:
+        qDebug() << "Type I.a:";
+        random_aggregate();
+        break;
+    case 1:
+        qDebug() << "Type I.b:";
+        random_aggregate_with_degree_comparison();
+        break;
+    case 2:
+        qDebug() << "Type I.c:";
+        random_aggregate_with_weight_comparison();
+        break;
+    case 3:
+         qDebug() << "Type II.a:";
+        random_aggregate_with_neighbour_initial_degree_bias();
+        break;
+    case 4:
+        qDebug() << "Type II.b:";
+        random_aggregate_with_neighbour_CURRENT_degree_bias();
+        break;
+    case 5:
+        qDebug() << "Type II.c:";
+        random_aggregate_highest_CURRENT_degree_neighbour();
+        break;
+    case 6:
+        qDebug() << "Type II.d:";
+        random_aggregate_with_minimum_weight_neighbour();
+        break;
+    case 7:
+        qDebug() << "Type II.e:";
+        random_aggregate_probabilistic_lowest_degree_neighbour_destructive();
+        break;
+    case 8:
+        qDebug() << "Type II.f:";
+        random_aggregate_probabilistic_candidate_with_minimum_weight_neighbour();
+        break;
+    case 9:
+        qDebug() << "Type II.g:";
+        random_aggregate_greedy_max_degree();
+        break;
+    case 10:
+        qDebug() << "Type II.h:";
+        random_aggregate_greedy_max_weight();
+        break;
+    case 11:
+        qDebug() << "Type III.a:";
+        random_aggregate_retain_vertex_using_triangulation();
+        break;
+    case 12:
+        qDebug() << "Type III.b:";
+        random_aggregate_retain_vertex_using_probabilistic_triangulation();
+        break;
+    case 13:
+        qDebug() << "Type III.c:";
+        random_aggregate_with_highest_triangulated_vertex();
+        break;
+    case 14:
+        qDebug() << "Type III.d:";
+        random_aggregate_retain_vertex_using_triangulation_times_weight();
+        break;
+    case 15:
+        qDebug() << "Type III.e:";
+        random_aggregate_retain_vertex_using_triangulation_of_cluster();
+        break;
+    default:
+        qDebug() << "Select A Number Between 0 - 15";
+      break;
     }
 }
 
@@ -2140,5 +2708,91 @@ double Graph::LARGE_compute_modularity()
         Q += Qi;
     }
     return Q;
+
+}
+
+// --------------------------- POST AGGREGATION -----------------------------------------
+// --------------------------------------------------------------------------------------
+/** For each cluster in the results from previous aggregation,
+ * Each cluster is now collapsed into a super vertex, which is then used for further aggregation
+ * @brief Graph::PostAgg_generate_super_vertex
+ */
+void Graph::PostAgg_generate_super_vertex()
+{
+    if(large_result.empty())
+    {
+        qDebug() << "- Aggregation Result is Empty! Terminating ...";
+        return;
+    }
+    if (myEdgeList.empty()) //reload edge if this is not retain type
+    {
+        LARGE_reload_edges();
+    }
+    //first create super vertices
+    QList<Vertex*> superV;
+    QMap<int,Vertex*> superMap; //map from old vertex to new vertex
+    for(int i = 0; i < large_result.size(); i++)
+    {
+        Vertex * v = new Vertex;
+        v->setIndex(superV.size());
+        superV.append(v);
+        QList<quint32> c = large_result[i];
+        for (int j = 0; j < c.size(); j++)
+        {
+            quint32 id = c[j];
+            superMap.insert(id,v);
+        }
+    }
+
+    QList<Edge*> superE;
+    QList<QPair<quint32,quint32> > newE;
+    //conencting super vertices
+    for(int i = 0; i < myEdgeList.size(); i++)
+    {
+        quint32 from = myEdgeList[i]->fromVertex()->getIndex(), to = myEdgeList[i]->toVertex()->getIndex();
+        if (!superMap.contains(from) || !superMap.contains(to))
+        {
+            qDebug() << "- Post Aggregation Error! Vertices Has Not Been Assigned To A Super Vertex";
+            qDebug() << "- Terminating ...";
+            return;
+        }
+        Vertex * superFrom = superMap.value(from);
+        Vertex * superTo = superMap.value(to);
+        if (superFrom->getIndex() == superTo->getIndex()){
+        }
+        else
+        {
+            QPair<quint32,quint32> s = qMakePair(superFrom->getIndex(), superTo->getIndex());
+            QPair<quint32,quint32> r_s = qMakePair(superTo->getIndex(), superFrom->getIndex());
+            if (!newE.contains(s) && !newE.contains(r_s))
+            {
+                newE.append(s);
+                newE.append(r_s);
+                Edge * e = new Edge(superFrom,superTo,superE.size());
+                superE.append(e);
+            }
+        }
+    }
+
+    //clearing the old list
+    for (int i = 0; i < myVertexList.size(); i++)
+        delete myVertexList[i];
+    myVertexList = superV;
+    myEdgeList = superE;
+    qDebug() << "- Post Aggregation Finished! After collapsing: SuperV: " << myVertexList.size()
+             << "SuperE: " << myEdgeList.size();
+    global_e = myEdgeList.size();
+    global_v = myVertexList.size();
+    no_run++;
+    qDebug() << "After Clustering Coefficient:" << cal_average_clustering_coefficient();
+    qDebug() << "Saving to the dir";
+    save_current_run_as_edge_file(QString(globalDirPath + "superGraph" + QString::number(no_run) + ".txt"));
+}
+
+/** Save the current run to stich back later
+ * @brief Graph::save_current_clusters
+ */
+void Graph::save_current_clusters()
+{
 
 }

@@ -65,9 +65,7 @@ void Vertex::removeAdj(const quint32 &index)
     if (myNeighbours.contains(index))
         myNeighbours.removeAll(index);
     else
-    {
-        qDebug() << "Out Of Bound While Trying to Remove A Neighbour";
-    }
+    {}
 }
 
 void Vertex::removeAll()
